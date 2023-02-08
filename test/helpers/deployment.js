@@ -40,3 +40,8 @@ export const getDynamoDb = (tableName) => {
     endpoint
   }
 }
+
+export const getUploadApiEndpoint = () => {
+  // CI/CD deployment
+  return `https://staging.up.web3.storage`
+}
