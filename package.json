@@ -13,15 +13,21 @@
     "console": "sst console",
     "lint": "tsc && eslint '**/*.js'",
     "clean": "rm -rf dist node_modules package-lock.json ./*/{.cache,dist,node_modules}",
-    "test": "npm test -w data",
+    "test": "npm test -w data -w consumer",
     "test-integration": "ava --verbose --serial --timeout=300s test/*.test.js"
   },
   "devDependencies": {
+    "@ipld/dag-ucan": "^3.0.1",
     "@serverless-stack/cli": "^1.18.4",
     "@serverless-stack/resources": "^1.18.4",
     "@tsconfig/node16": "^1.0.3",
     "@types/git-rev-sync": "^2.0.0",
     "@types/node": "^18.11.18",
+    "@ucanto/client": "^4.0.3",
+    "@ucanto/principal": "^4.0.3",
+    "@web3-storage/access": "^9.2.0",
+    "@web3-storage/w3up-client": "^4.0.1",
+    "@web-std/blob": "^3.0.4",
     "aws-cdk-lib": "2.50.0",
     "git-rev-sync": "^3.0.2",
     "hd-scripts": "^3.0.2",
@@ -47,7 +53,9 @@
     },
     "rules": {
       "unicorn/explicit-length-check": "off",
+      "unicorn/filename-case": "off",
       "unicorn/prefer-set-has": "off",
+      "unicorn/prefer-module": "off",
       "unicorn/no-array-callback-reference": "off",
       "unicorn/no-await-expression-member": "off",
       "unicorn/no-zero-fractions": "off",
@@ -57,6 +65,7 @@
   },
   "workspaces": [
     "api",
+    "consumer",
     "data"
   ]
 }

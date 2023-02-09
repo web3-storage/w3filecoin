@@ -31,3 +31,7 @@ export interface FerryOpts {
 export interface CarTable {
   batchWrite: (items: CarItem[]) => Promise<void>
 }
+
+export interface CarOpts {
+  endpoint?: string
+}

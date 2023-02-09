@@ -1,13 +1,12 @@
 import { testData as test } from './helpers/context.js'
 
-import { BatchWriteItemCommand, ScanCommand } from '@aws-sdk/client-dynamodb'
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
 import pWaitFor from 'p-wait-for'
 
 import { createCarTable } from '../data/tables/car.js'
 import { FERRY_STATE } from '../data/tables/ferry.js'
 
 import { getCars } from '../data/test/helpers/car.js'
+import { deleteAll, getTableRows } from './helpers/dynamo.js'
 import {
   getAwsRegion,
   getDynamoDb,
@@ -122,120 +121,6 @@ test('can write in car table until a ferry gets in ready state', async t => {
   const ferryItems = await getTableRows(cargoDynamo.client, cargoDynamo.tableName)
   t.is(ferryItems.length, batchSize * batchCount)
 })
-
-
-/**
- * @param {{ region?: string; ferryDynamo: any; carDynamo: any; cargoDynamo: any; }} context
- */
-async function deleteAll (context) {
-  const { carDynamo, ferryDynamo, cargoDynamo } = context
-
-  // Delete Car Table
-  await deleteCarTableRows(carDynamo.client, carDynamo.tableName, 
-    await getTableRows(carDynamo.client, carDynamo.tableName)
-  )
-
-  // Delete Ferry Table
-  await deleteFerryTableRows(ferryDynamo.client, ferryDynamo.tableName, 
-    await getTableRows(ferryDynamo.client, ferryDynamo.tableName)
-  )
-
-  // Delete Cargo Table
-  await deleteCargoTableRows(cargoDynamo.client, cargoDynamo.tableName, 
-    await getTableRows(cargoDynamo.client, cargoDynamo.tableName)
-  )
-}
-
-/**
- * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamo
- * @param {string} tableName
- * @param {object} [options]
- * @param {number} [options.limit]
- */
-async function getTableRows (dynamo, tableName, options = {}) {
-  const cmd = new ScanCommand({
-    TableName: tableName,
-    Limit: options.limit || 1000
-  })
-
-  const response = await dynamo.send(cmd)
-  return response.Items?.map(i => unmarshall(i)) || []
-}
-
-/**
- * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamo
- * @param {string} tableName
- * @param {Record<string, any>[]} rows
- */
-async function deleteCarTableRows (dynamo, tableName, rows) {
-  const deleteRows = [...rows]
-
-  while (deleteRows.length) {
-    const requests = deleteRows.splice(0, 25).map(row => ({
-      DeleteRequest: {
-        Key: marshall({ link: row.link })
-      }
-    }))
-    const cmd = new BatchWriteItemCommand({
-      RequestItems: {
-        [tableName]: requests
-      }
-    })
-
-    await dynamo.send(cmd)
-  }
-}
-
-/**
- * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamo
- * @param {string} tableName
- * @param {Record<string, any>[]} rows
- */
-async function deleteFerryTableRows (dynamo, tableName, rows) {
-  const deleteRows = [...rows]
-
-  while (deleteRows.length) {
-    const requests = deleteRows.splice(0, 25).map(row => ({
-      DeleteRequest: {
-        Key: marshall({ id: row.id })
-      }
-    }))
-    const cmd = new BatchWriteItemCommand({
-      RequestItems: {
-        [tableName]: requests
-      }
-    })
-
-    await dynamo.send(cmd)
-  }
-}
-
-/**
- * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamo
- * @param {string} tableName
- * @param {Record<string, any>[]} rows
- */
-async function deleteCargoTableRows (dynamo, tableName, rows) {
-  const deleteRows = [...rows]
-
-  while (deleteRows.length) {
-    const requests = deleteRows.splice(0, 25).map(row => ({
-      DeleteRequest: {
-        Key: marshall({
-          ferryId: row.ferryId,
-          link: row.link
-        })
-      }
-    }))
-    const cmd = new BatchWriteItemCommand({
-      RequestItems: {
-        [tableName]: requests
-      }
-    })
-
-    await dynamo.send(cmd)
-  }
-}
 
 /**
  * @param {number} length
